@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Flux Temps Réel - Digital Twin</title>
+    <style>
+        body { font-family: sans-serif; margin: 30px; background: #f4f6f9; }
+        #messages { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-height: 400px; overflow-y: auto; }
+        .pos { color: #2ecc71; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>📡 Flux WebSocket en temps réel</h2>
+    <p>Statut de la connexion : <span id="status" style="color: orange;">Connexion...</span></p>
+    
+    <h3>Dernières positions reçues :</h3>
+    <div id="messages">Le flux est vide. Envoie une position via un curl pour voir la magie opérer...</div>
+
+    <script>
+        // Connexion au serveur WebSocket local de ta camarade
+        const ws = new WebSocket("ws://localhost:8000/ws");
+        const statusSpan = document.getElementById("status");
+        const messagesDiv = document.getElementById("messages");
+
+        // Quand la connexion réussit
+        ws.onopen = () => {
+            statusSpan.innerText = "Connecté au Backend ! ✅";
+            statusSpan.style.color = "green";
+        };
+
+        // Quand le serveur envoie une donnée
+        ws.onmessage = (event) => {
+            const response = JSON.parse(event.data);
+            console.log("Donnée reçue :", response);
+
+            if (messagesDiv.innerText.includes("Le flux est vide")) {
+                messagesDiv.innerHTML = "";
+            }
+
+            // On affiche proprement la position reçue
+            const date = new Date(response.timestamp).toLocaleTimeString();
+            response.data.forEach(p => {
+                messagesDiv.innerHTML += `<p>[${date}] 👤 Personne ID ${p.id} -> <span class="pos">X: ${p.x}, Y: ${p.y}</span> (Confiance: ${p.confidence * 100}%)</p>`;
+            });
+        };
+
+        // Si le serveur se coupe
+        ws.onclose = () => {
+            statusSpan.innerText = "Déconnecté ❌";
+            statusSpan.style.color = "red";
+        };
+    </script>
+</body>
+</html>
