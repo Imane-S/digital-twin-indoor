@@ -1,0 +1,63 @@
+name: CI/CD Pipeline
+
+# Le pipeline se déclenche à chaque push ou pull-request sur la branche principale
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+
+    services:
+      # On lance Redis et Postgres pour que l'API FastAPI puisse s'y connecter pendant les tests
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: digitaltwin
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      # 1. Copier le code du dépôt GitHub sur la machine virtuelle
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Installer Python 3.11
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # 3. Installer les dépendances du backend (y compris pytest et httpx)
+      - name: Install dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest httpx
+
+      # 4. Exécuter les tests unitaires
+      - name: Run tests with pytest
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/digitaltwin
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          MQTT_HOST: localhost
+        run: |
+          cd backend
+          pytest
