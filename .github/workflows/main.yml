@@ -57,30 +57,4 @@ jobs:
           MQTT_HOST: localhost
         run: |
           cd backend
-          pytest      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # 2. Installer Python 3.11
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      # 3. Installer les dépendances du backend (y compris pytest et httpx)
-      - name: Install dependencies
-        run: |
-          cd backend
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest httpx
-
-      # 4. Exécuter les tests unitaires
-      - name: Run tests with pytest
-        env:
-          DATABASE_URL: postgresql://user:password@localhost:5432/digitaltwin
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-          MQTT_HOST: localhost
-        run: |
-          cd backend
           pytest

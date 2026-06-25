@@ -9,21 +9,61 @@ services:
       - DATABASE_URL=postgresql://user:password@postgres:5432/digitaltwin
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - MQTT_HOST=mosquitto
     depends_on:
       - postgres
       - redis
+      - mosquitto
+    networks:
+      - digital_twin_net
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - digital_twin_net
 
   postgres:
-    image: postgres:15
+    image: postgres:15-alpine
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: digitaltwin
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - digital_twin_net
 
   redis:
-    image: redis:7
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - digital_twin_net
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883" # Port MQTT standard
+      - "9001:9001" # Port WebSockets au besoin
+    volumes:
+      - mosquitto_config:/mosquitto/config
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    networks:
+      - digital_twin_net
 
 volumes:
   postgres_data:
+  mosquitto_config:
+  mosquitto_data:
+  mosquitto_log:
+
+networks:
+  digital_twin_net:
+    driver: bridge
