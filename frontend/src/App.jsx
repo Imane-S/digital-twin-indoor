@@ -13,21 +13,17 @@ function App() {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    // Fonction qui va chercher les données sur le port 8080
     const fetchStatusAndHistory = async () => {
       try {
         const res = await fetch("http://localhost:8080/history");
         const data = await res.json();
         
-        // Mettre à jour l'historique dans le tableau
         setHistory(data);
 
         if (data && data.length > 0) {
-          // Trouver la ligne la plus récente pour la Zone A et la Zone B
           const dernierA = data.find(item => item.zone === "Zone_A");
           const dernierB = data.find(item => item.zone === "Zone_B");
 
-          // Mettre à jour l'état des rectangles sur la carte
           if (dernierA) setZoneAStatus(dernierA.statut);
           if (dernierB) setZoneBStatus(dernierB.statut);
         }
@@ -36,13 +32,8 @@ function App() {
       }
     };
 
-    // Charger les données immédiatement au démarrage
     fetchStatusAndHistory();
-
-    // Re-vérifier automatiquement TOUTES les secondes (1000ms)
     const interval = setInterval(fetchStatusAndHistory, 1000);
-
-    // Nettoyer l'intervalle si on quitte l'application
     return () => clearInterval(interval);
   }, []);
 
